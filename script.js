@@ -1,10 +1,12 @@
-// ==================== INERTIA SMOOTH SCROLLING (LENIS) ====================
+// ==================== CẤU HÌNH LENIS KHÔNG XUNG ĐỘT ====================
+let lenis; // Khai báo biến toàn cục để các hàm khác có thể gọi tới
+
 if (typeof Lenis !== 'undefined') {
-    const lenis = new Lenis({
-        duration: 1.2,       // Thời gian trượt (giây) - Càng cao cuộn càng mềm
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Gia tốc trượt
+    lenis = new Lenis({
+        duration: 1.2,       
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
         smooth: true,
-        smoothTouch: false,  // Tắt trên điện thoại để nhường chỗ cho cuộn tự nhiên của máy
+        smoothTouch: false,  
     });
 
     function raf(time) {
@@ -13,18 +15,8 @@ if (typeof Lenis !== 'undefined') {
     }
     requestAnimationFrame(raf);
 }
-// Bật / Tắt Menu trên điện thoại khi bấm vào nút Hamburger
-document.addEventListener('DOMContentLoaded', () => {
-    const mobileToggle = document.getElementById('mobileToggle');
-    const navMenu = document.getElementById('navMenu');
 
-    if (mobileToggle && navMenu) {
-        mobileToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-        });
-    }
-});
-// Kích hoạt cuộn mượt cho tất cả các nút có link bắt đầu bằng dấu "#"
+// ==================== TỐI ƯU CUỘN MƯỢT # ANCHOR (TƯƠNG THÍCH LENIS) ====================
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault(); // Ngăn hành vi nhảy trang đột ngột mặc định
@@ -35,19 +27,28 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         if (targetElement) {
             // Chiều cao của Header để trừ hao (tránh bị che khuất tiêu đề)
             const headerOffset = 100; 
-            
-            // Tính toán vị trí chính xác cần cuộn tới
-            const elementPosition = targetElement.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.scrollY - headerOffset;
 
-            // Thực hiện lệnh cuộn mượt
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
+            // Kiểm tra nếu thư viện Lenis đang hoạt động ổn định
+            if (lenis) {
+                // Sử dụng hàm scrollTo chính chủ của Lenis, tự động mượt mà không lo lag máy
+                lenis.scrollTo(targetElement, {
+                    offset: -headerOffset,
+                    immediate: false // Giữ nguyên hiệu ứng trượt 1.2 giây mượt mà
+                });
+            } else {
+                // Phương án dự phòng nếu Lenis bị lỗi/không tải được
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'auto' // Tuyệt đối không để 'smooth' ở đây để tránh giật hình
+                });
+            }
         }
     });
 });
+
 // =========================================================
 // HỆ THỐNG PHÁT NHẠC (MUSIC PLAYER) CHO TRANG GÓC NHỎ
 // =========================================================
@@ -313,25 +314,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
-// ==================== TỐI ƯU LỊCH SỬ CHUYỂN TRANG (NO HISTORY STACK) ====================
+// ==================== XỬ LÝ NÚT HOME ĐẶC BIỆT (XÓA LỊCH SỬ) ====================
 document.addEventListener('DOMContentLoaded', () => {
-    // Tìm tất cả các link trên thanh menu có class 'nav-link'
-    const menuLinks = document.querySelectorAll('a.nav-link');
+    const specialHomeBtn = document.getElementById('specialHomeBtn');
 
-    menuLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            const targetUrl = this.getAttribute('href');
+    if (specialHomeBtn) {
+        specialHomeBtn.addEventListener('click', function(e) {
+            const homeUrl = this.getAttribute('href');
 
-            // Bỏ qua nếu đây là link trượt cuộn trang (có chứa dấu #) hoặc link trống
-            if (!targetUrl || targetUrl.includes('#') || targetUrl.startsWith('javascript')) {
-                return;
+            if (homeUrl) {
+                // Chặn trình duyệt mở link theo cách thông thường
+                e.preventDefault(); 
+                
+                // Ghi đè lịch sử: Đưa người dùng về trang chủ và xóa toàn bộ 
+                // vết tích của trang con họ vừa đọc ra khỏi bộ nhớ Stack
+                window.location.replace(homeUrl); 
             }
+        });
+    }
+});
+// ==================== ĐIỀU KHIỂN MENU MOBILE ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileToggle = document.getElementById('mobileToggle');
+    const navMenu = document.getElementById('navMenu');
 
-            // Ngăn chặn trình duyệt mở link theo cách thông thường (tạo thêm lịch sử)
-            e.preventDefault();
+    if (mobileToggle && navMenu) {
+        // 1. Mở/Đóng menu khi bấm nút Hamburger
+        mobileToggle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Ngăn sự kiện click lan ra document
+            navMenu.classList.toggle('active');
+        });
 
-            // Chuyển sang trang mới bằng cách ghi đè lịch sử hiện tại
-            window.location.replace(targetUrl);
+        // 2. ĐÓNG MENU KHI BẤM RA KHOẢNG TRỐNG BÊN NGOÀI
+        document.addEventListener('click', (e) => {
+            // Kiểm tra: Nếu menu đang mở VÀ vị trí bấm KHÔNG nằm trong menu cũng KHÔNG nằm trong nút hamburger
+            if (navMenu.classList.contains('active') && 
+                !navMenu.contains(e.target) && 
+                !mobileToggle.contains(e.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+    }
+
+    // 3. Đóng menu khi bấm chọn một trang (trên mobile)
+    const menuLinks = document.querySelectorAll('.nav-link');
+    menuLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (!link.classList.contains('dropdown-toggle')) {
+                navMenu.classList.remove('active');
+            }
         });
     });
 });

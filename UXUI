@@ -1,0 +1,7 @@
+Chỗ cần chỉnh lại
+
+V: Chặn lịch sử trình duyệt (window.location.replace): Ở cuối file JS nav-link, nên để ở nút home để bấm vào thoát ra ngay
+V: Tải quá nhiều hiệu ứng cùng lúc: Bạn đang nhúng thư viện cuộn mượt Lenis, đồng thời lại bật thuộc tính CSS scroll-behavior: smooth và hiệu ứng window.scrollTo bằng JS thuần. Việc chèn cả hiệu ứng trượt cuộn giả lập (Inertia/Smooth scroll) đè lên cuộn mặc định đôi khi sẽ gây ra hiện tượng giật, lag trên một số dòng máy Android hoặc màn hình tần số quét cao (120Hz).
+
+page liên hệ
+chỗ email có thể bị bot quét và gửi các thư 

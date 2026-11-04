@@ -71,7 +71,7 @@
 .email-copy-wrapper button:hover { color: var(--accent-orange); transform: scale(1.1); }
 
 /* --- CỘT PHẢI: FORM LIÊN HỆ --- */
-.contact-form { display: flex; flex-direction: column; gap: 20px; }
+.contact-form { display: flex; flex-direction: column; gap: 20px; margin-bottom: 40px; }
 .form-group { display: flex; flex-direction: column; gap: 8px; }
 .form-group label { font-size: 14px; font-weight: 700; color: #4A4036; }
 .form-group input, .form-group select, .form-group textarea {
